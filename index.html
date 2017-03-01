@@ -50,17 +50,19 @@
     }
 
     self.projectLightRay = function(ctx, directionRadians, bounces) {
-      projectLight(ctx, candle, directionRadians, bounces, 1);
+      var x = increment * Math.sin(direction);
+      var y = increment * Math.cos(direction);
+      projectLight(ctx, candle, {x, y}, bounces, 1);
     }
 
-    function projectLight(ctx, startPoint, direction, bounces, increment) {
+    function projectLight(ctx, startPoint, lightVector, bounces, increment) {
       if (bounces < 0) return;
 
       drawCircle(ctx, startPoint, 1)
-      var newX = increment * Math.sin(direction);
-      var newY = increment * Math.cos(direction);
+      var newX = lightVector.x + startPoint.x;
+      var newY = lightVector.y + startPoint.y;
 
-      var newPoint = { x: newX + startPoint.x, y: newY + startPoint.y};
+      var newPoint = { x: newX , y: newY };
       var collidingWall = null;
       for (var i = 0; i < walls.length; i++) {
         if (walls[i].intercects(newPoint)) {
@@ -70,16 +72,16 @@
       }
       if (collidingWall == null) {
         // keep going
-        projectLight(ctx, newPoint, direction, bounces, increment);
+        projectLight(ctx, newPoint, lightVector, bounces, increment);
       } else {
         // reflect
 
-        projectLight(ctx, newPoint, direction + Math.PI / 1.5, bounces-1, increment);
+        projectLight(ctx, newPoint, collidingWall.bounce(lightVector), bounces-1, increment);
       }
     }
 
     self.placeCandle = function (point) {
-      candle = new Candle(point);
+      candle = new Candle(pointd);
     }
   }
 
@@ -120,7 +122,7 @@
       return { x: -(self.y2-self.y1), y: (self.x2-self.x1) };
     }
 
-    self.bounce = function (incomingAngle) {
+    self.bounce = function (incomingVector) {
       var normal = self.normal();
       var incomingVector = { x: Math.cos(incomingAngle), y: Math.sin(incomingAngle) }
 
