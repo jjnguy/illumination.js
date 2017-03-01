@@ -1,0 +1,157 @@
+<!DOCTYPE>
+<html>
+<head></head>
+<body>
+  <style>
+  canvas {
+    border: 1px solid #dadada;
+  }
+  </style>
+  <div>
+    <canvas id="canvas">Your browser doesn't support this webpage</canvas>
+  </div>
+  <script>
+  // http://stackoverflow.com/a/18053642/2598
+  function getCursorPosition(canvas, event) {
+      var rect = canvas.getBoundingClientRect();
+      var x = event.clientX - rect.left;
+      var y = event.clientY - rect.top;
+      return {x, y};
+  }
+
+  function drawCircle(ctx, center, radius) {
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2, true); // Outer circle
+    ctx.stroke();
+  }
+
+  </script>
+  <script>
+  function Room(vertices) {
+    var self = this;
+
+    var candle = null;
+
+    var walls = []
+    for (var i = 0; i < vertices.length - 1; i++) {
+      walls.push(new Wall(vertices[i], vertices[i + 1]));
+    }
+
+    self.draw = function(ctx) {
+      ctx.beginPath()
+      for (var i = 0; i < walls.length; i++) {
+        walls[i].draw(ctx);
+      }
+      ctx.stroke();
+
+      if (candle) {
+        drawCircle(ctx, candle, 3);
+      }
+    }
+
+    self.projectLightRay = function(ctx, directionRadians, bounces) {
+      projectLight(ctx, candle, directionRadians, bounces, 1);
+    }
+
+    function projectLight(ctx, startPoint, direction, bounces, increment) {
+      if (bounces < 0) return;
+
+      drawCircle(ctx, startPoint, 1)
+      var newX = increment * Math.sin(direction);
+      var newY = increment * Math.cos(direction);
+
+      var newPoint = { x: newX + startPoint.x, y: newY + startPoint.y};
+      var collidingWall = null;
+      for (var i = 0; i < walls.length; i++) {
+        if (walls[i].intercects(newPoint)) {
+          collidingWall = walls[i];
+          break;
+        }
+      }
+      if (collidingWall == null) {
+        // keep going
+        projectLight(ctx, newPoint, direction, bounces, increment);
+      } else {
+        // reflect
+
+        projectLight(ctx, newPoint, direction + Math.PI / 1.5, bounces-1, increment);
+      }
+    }
+
+    self.placeCandle = function (point) {
+      candle = new Candle(point);
+    }
+  }
+
+  function Candle(point) {
+    var self = this;
+
+    self.x = point.x;
+    self.y = point.y;
+  }
+
+  function Wall(vertex1, vertex2) {
+    var self = this;
+
+    self.x1 = vertex1.x;
+    self.y1 = vertex1.y;
+
+    self.x2 = vertex2.x;
+    self.y2 = vertex2.y;
+
+    self.draw = function(ctx) {
+      ctx.moveTo(self.x1, self.y1);
+      ctx.lineTo(self.x2, self.y2);
+    }
+
+    self.intercects = function(point) {
+      // http://stackoverflow.com/a/39109704/2598
+      // C is the point we are checking
+      // A and B are two points on the line for sure (our vertices)
+      // (C.x - A.x)*(C.y - B.y) - (C.x - B.x)*(C.y - A.y) == 0
+
+      var result = (point.x - self.x1)*(point.y - self.y2) - (point.x - self.x2)*(point.y - self.y1);
+      return Math.abs(result) <= 20;
+    }
+
+    self.normal = function() {
+      // http://stackoverflow.com/a/1243676/2598
+      // if we define dx=x2-x1 and dy=y2-y1, then the normals are (-dy, dx) and (dy, -dx).
+      return { x: -(self.y2-self.y1), y: (self.x2-self.x1) };
+    }
+
+    self.bounce = function (incomingAngle) {
+      var normal = self.normal();
+      var incomingVector = { x: Math.cos(incomingAngle), y: Math.sin(incomingAngle) }
+
+    }
+  }
+  </script>
+  <script>
+  var canvas = document.getElementById('canvas');
+  canvas.width = 200;
+  canvas.height = 200;
+  var ctx = canvas.getContext('2d');
+
+  var room = new Room([
+    {x: 0, y: 0},
+    {x: 100, y: 0},
+    {x: 80, y: 100},
+    {x: 0, y: 100},
+    {x: 0, y: 0}
+  ]);
+
+  canvas.addEventListener('click', event => {
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+    var pointClicked = getCursorPosition(canvas, event);
+    console.log(pointClicked)
+    room.placeCandle(pointClicked);
+    room.draw(ctx);
+    room.projectLightRay(ctx, 0, 1)
+  })
+
+  room.draw(ctx);
+
+  </script>
+</body>
+</html>
