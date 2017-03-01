@@ -53,6 +53,8 @@
       var x = increment * Math.sin(direction);
       var y = increment * Math.cos(direction);
       projectLight(ctx, candle, {x, y}, bounces, 1);
+      var increment = 1;
+      projectLight(ctx, candle, {x, y}, bounces, increment);
     }
 
     function projectLight(ctx, startPoint, lightVector, bounces, increment) {
@@ -81,7 +83,7 @@
     }
 
     self.placeCandle = function (point) {
-      candle = new Candle(pointd);
+      candle = new Candle(point);
     }
   }
 
@@ -124,8 +126,7 @@
 
     self.bounce = function (incomingVector) {
       var normal = self.normal();
-      var incomingVector = { x: Math.cos(incomingAngle), y: Math.sin(incomingAngle) }
-
+      // TODO: calculate bounce based off of http://stackoverflow.com/questions/573084/how-to-calculate-bounce-angle
     }
   }
   </script>
